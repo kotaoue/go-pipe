@@ -16,10 +16,6 @@ func main() {
 }
 
 func Main() error {
-	const (
-		Shell = "/bin/bash"
-	)
-
 	var (
 		cmd     *exec.Cmd      // コマンド
 		fd0Pipe io.WriteCloser // 標準入力のパイプ
@@ -28,7 +24,7 @@ func Main() error {
 	)
 
 	// コマンド構築
-	cmd = exec.Command(Shell, "-c", "tr a-z A-Z | sort; echo ...done... 1>&2")
+	cmd = exec.Command("/bin/bash", "-c", "tr a-z A-Z | sort; echo ...done... 1>&2")
 
 	//
 	// パイプを取得
