@@ -18,13 +18,50 @@ func main() {
 func Main() error {
 	var (
 		cmd     *exec.Cmd      // コマンド
+		fd0Pipe io.WriteCloser // 標準入力
+		fd1Pipe io.ReadCloser  // 標準出力
+	)
+
+	cmd = exec.Command("/bin/bash", "-c", "tr a-z A-Z | sort; echo ...done...")
+
+	fd0Pipe, _ = cmd.StdinPipe()
+	fd1Pipe, _ = cmd.StdoutPipe()
+
+	if err := cmd.Start(); err != nil {
+		return err
+	}
+
+	// 標準入力のハンドリング
+	go func() {
+		defer fd0Pipe.Close()
+
+		io.WriteString(fd0Pipe, "python\n")
+		io.WriteString(fd0Pipe, "csharp\n")
+		io.WriteString(fd0Pipe, "golang\n")
+		io.WriteString(fd0Pipe, "java\n")
+	}()
+
+	// 標準出力のハンドリング
+	go func() {
+		scanner := bufio.NewScanner(fd1Pipe)
+		for scanner.Scan() {
+			fmt.Println(scanner.Text())
+		}
+	}()
+
+	return cmd.Wait()
+}
+
+func Pipe() error {
+	var (
+		cmd     *exec.Cmd      // コマンド
 		fd0Pipe io.WriteCloser // 標準入力のパイプ
 		fd1Pipe io.ReadCloser  // 標準出力のパイプ
 		fd2Pipe io.ReadCloser  // 標準エラー出力のパイプ
 	)
 
 	// コマンド構築
-	cmd = exec.Command("/bin/bash", "-c", "tr a-z A-Z | sort; echo done... 1>&2")
+	cmd = exec.Command("/bin/bash", "-c", "tr a-z A-Z | sort; echo ...done... 1>&2")
 
 	//
 	// パイプを取得
