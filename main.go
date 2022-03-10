@@ -24,7 +24,7 @@ func Main() error {
 	)
 
 	// コマンド構築
-	cmd = exec.Command("/bin/bash", "-c", "tr a-z A-Z | sort; echo ...done... 1>&2")
+	cmd = exec.Command("/bin/bash", "-c", "tr a-z A-Z | sort; echo done... 1>&2")
 
 	//
 	// パイプを取得
