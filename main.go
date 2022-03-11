@@ -16,16 +16,19 @@ func main() {
 }
 
 func Main() error {
-	if err := useStdIO(); err != nil {
+	fmt.Println("----runWithStdIO----")
+	if err := runWithStdIO(); err != nil {
 		return err
 	}
-	if err := run(); err != nil {
+
+	fmt.Println("----runWithCommands----")
+	if err := runWithCommands(); err != nil {
 		return err
 	}
 	return nil
 }
 
-func useStdIO() error {
+func runWithStdIO() error {
 	cmd := exec.Command("/bin/bash", "-c", "tr a-z A-Z | sort; echo ...done...")
 
 	wc, _ := cmd.StdinPipe()
@@ -57,65 +60,37 @@ func stdOut(rc io.ReadCloser) {
 	}
 }
 
-func run() error {
-	var (
-		cmds = []*exec.Cmd{
-			exec.Command("ls", "-1", "-a", homeDir()),
-			exec.Command("grep", "-v", "-E", "^[.].*"),
-			exec.Command("wc", "-l"),
-		}
-		err error
-	)
+func runWithCommands() error {
+	cmds := []*exec.Cmd{
+		exec.Command("ls", "-1", "-a"),
+		exec.Command("grep", "-v", "-E", "^[.].*"),
+	}
 
-	if err = prepare(cmds); err != nil {
+	if err := build(cmds); err != nil {
 		return err
 	}
 
-	if err = build(cmds); err != nil {
+	if err := start(cmds); err != nil {
 		return err
 	}
 
-	if err = start(cmds); err != nil {
+	if err := wait(cmds); err != nil {
 		return err
 	}
-
-	if err = wait(cmds); err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func homeDir() string {
-	var (
-		dir string
-		err error
-	)
-
-	if dir, err = os.UserHomeDir(); err != nil {
-		panic(err)
-	}
-
-	return dir
-}
-
-func prepare(cmds []*exec.Cmd) error {
-	cmds[0].Stdin = os.Stdin
-	cmds[len(cmds)-1].Stdout = os.Stdout
 
 	return nil
 }
 
 func build(cmds []*exec.Cmd) error {
-	for i := 0; i < len(cmds)-1; i++ {
-		var (
-			curr = cmds[i]
-			next = cmds[i+1]
-			out  io.ReadCloser
-			err  error
-		)
+	cmds[0].Stdin = os.Stdin
+	cmds[len(cmds)-1].Stdout = os.Stdout
 
-		if out, err = curr.StdoutPipe(); err != nil {
+	for i := 0; i < len(cmds)-1; i++ {
+		current := cmds[i]
+		next := cmds[i+1]
+
+		out, err := current.StdoutPipe()
+		if err != nil {
 			return err
 		}
 
